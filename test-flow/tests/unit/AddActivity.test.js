@@ -7,12 +7,12 @@ const expect = chai.expect;
 
 describe('Test AddActivity', function () {
 
-    it('Handles messages', async () => {
+    it.only('Handles messages', async () => {
         
         const context = {
             flowName: 'AddFlow',
-            flowStepName: 'StepName',
             flowInstanceId: 'd30a461d-168d-4dec-a86e-a2eee6272d20',
+            flowStepName: 'StepName',
             flowRequestId: '59624188-3a11-4ccb-bfcf-4f8e47285006',
             flowMessageCount: 1                
         };
@@ -41,7 +41,7 @@ describe('Test AddActivity', function () {
 
         let actualPublishedParams;
         let actualResponse;
-        const mockDeps = {
+        const testDeps = {
             totaliser: async (v1, v2) => { return Promise.resolve(v1 + v2); },
             publish: async (params) => {
                 actualPublishedParams = params;
@@ -50,7 +50,7 @@ describe('Test AddActivity', function () {
             }
         };
 
-        const publishedData = await flowActivity.handleMessage(event, addActivitySUT, env, mockDeps, 'AddRequest');
+        const publishedData = await flowActivity.handleMessage(event, addActivitySUT, env, testDeps, 'AddRequest');
 
         expect(publishedData.MessageId).to.equal('MockMessageId');
         
@@ -69,7 +69,9 @@ describe('Test AddActivity', function () {
         { request: { value1: 1, value2: 'X' }, expectedResult: 'Request value not a number: value2=X' },        
     ].forEach(theory => {
 
-        const mockDeps = {
+        const context = undefined;
+
+        const testDeps = {
             totaliser: async (v1, v2) => { return Promise.resolve(v1 + v2); }
         };
 
@@ -77,13 +79,13 @@ describe('Test AddActivity', function () {
         
             if (typeof theory.expectedResult === 'number') {
                 
-                const response = await addActivitySUT.handleRequest(theory.request, mockDeps);
+                const response = await addActivitySUT.handleRequest(context, theory.request, testDeps);
                 expect(response.total).to.equal(theory.expectedResult);
 
             } else {
 
                 try {
-                    await addActivitySUT.handleRequest(theory.request, mockDeps);                    
+                    await addActivitySUT.handleRequest(context, theory.request, testDeps);                    
                 } catch (error) {
                     expect(error.message).to.equal(theory.expectedResult);        
                 }

@@ -12,7 +12,7 @@ exports.handler = async function (event) {
     return await flowActivity.handle(event, addActivity, deps);
 };    
 
-exports.handleRequest = async function(request, deps) {
+exports.handleRequest = async function(_flowContext, request, deps) {
 
     ensureNumber('value1', request.value1);
     ensureNumber('value2', request.value2);
@@ -28,7 +28,7 @@ exports.handleRequest = async function(request, deps) {
 
 function ensureNumber(name, value) {
 
-    if (!value) {
+    if (value === undefined) {
         throw new Error(`Request value not specified: ${name}`);
     }
 
