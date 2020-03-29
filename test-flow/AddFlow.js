@@ -1,6 +1,6 @@
 // const handledRequestType = 'AddFlowRequest';
 
-exports.lambda = async function (event) {
+exports.handler = async function (event) {
 
     const sns = event.Records[0].Sns;
 
@@ -14,4 +14,13 @@ exports.lambda = async function (event) {
     // if (requestType !== handledRequestType) {
     //     throw new Error(`Unexpected request type: ${requestType}`);
     // }
+};
+
+// eslint-disable-next-line no-unused-vars
+exports.handleRequest = function(request, deps) {
+    
+    const response = {
+    };
+
+    return response;
 };

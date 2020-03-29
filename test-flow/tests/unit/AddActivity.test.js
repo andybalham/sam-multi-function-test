@@ -42,7 +42,7 @@ describe('Test AddActivity', function () {
         let actualPublishedParams;
         let actualResponse;
         const mockDeps = {
-            totaliser: (v1, v2) => { return v1 + v2; },
+            totaliser: async (v1, v2) => { return Promise.resolve(v1 + v2); },
             publish: async (params) => {
                 actualPublishedParams = params;
                 actualResponse = JSON.parse(params.Message);
@@ -66,23 +66,27 @@ describe('Test AddActivity', function () {
         { request: { value1: undefined, value2: 2 }, expectedResult: 'Request value not specified: value1' },
         { request: { value1: 1, value2: undefined }, expectedResult: 'Request value not specified: value2' },
         { request: { value1: 'X', value2: 2 }, expectedResult: 'Request value not a number: value1=X' },
-        { request: { value1: 1, value2: 'X' }, expectedResult: 'Request value not a number: value2=X' },
+        { request: { value1: 1, value2: 'X' }, expectedResult: 'Request value not a number: value2=X' },        
     ].forEach(theory => {
 
         const mockDeps = {
-            totaliser: (v1, v2) => { return v1 + v2; }
+            totaliser: async (v1, v2) => { return Promise.resolve(v1 + v2); }
         };
 
         it(`Handles request ${JSON.stringify(theory)}`, async () => {
         
             if (typeof theory.expectedResult === 'number') {
-                const response = addActivitySUT.handleRequest(theory.request, mockDeps);
+                
+                const response = await addActivitySUT.handleRequest(theory.request, mockDeps);
                 expect(response.total).to.equal(theory.expectedResult);
-            }
-            else {
-                expect(() => {
-                    addActivitySUT.handleRequest(theory.request, mockDeps);
-                }).to.throw(theory.expectedResult);
+
+            } else {
+
+                try {
+                    await addActivitySUT.handleRequest(theory.request, mockDeps);                    
+                } catch (error) {
+                    expect(error.message).to.equal(theory.expectedResult);        
+                }
             }
         });    
     });

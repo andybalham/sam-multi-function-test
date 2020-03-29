@@ -24,7 +24,7 @@ exports.handleMessage = async function (event, activity, env, deps) {
     
     const requestMessage = getRequestMessage(event, activity.HANDLED_REQUEST_NAME);
     
-    const response = activity.handleRequest(requestMessage.body, deps);
+    const response = await activity.handleRequest(requestMessage.body, deps);
 
     const publishResponse = await publishResponseMessage(requestMessage, response, env, deps);
     return publishResponse;
