@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-multi-function-test
+
+  Sample SAM Template for sam-multi-function-test
+
+Parameters:
+  Application:
+    Type: String
+    Default: FlowPrototype
+  Environment:
+    Type: String
+        
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+
+  RequestResponseTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub ${Environment}-${Application}-RequestResponseTopic
+      DisplayName: Topic for request & response messages
+
+  FlowWireTapFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${Environment}-${Application}-FlowWireTap
+      CodeUri: test-flow/
+      Handler: FlowWireTap.handler
+      Runtime: nodejs12.x
+      Events:
+        NotificationTopic:
+          Type: SNS
+          Properties:
+            Topic: !Ref RequestResponseTopic
+
+  AddActivityFunction: # We know this in the handler
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${Environment}-${Application}-AddActivity # We know this in the handler
+      CodeUri: test-flow/ # How can we populate this? I guess we know it if we are running a test
+      Handler: AddActivity.handler # We know this in the handler
+      Runtime: nodejs12.x # We can default this
+      Policies:
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt RequestResponseTopic.TopicName
+      Environment:
+        Variables:
+          REQUEST_RESPONSE_TOPIC_ARN: !Ref RequestResponseTopic
+      Events:
+        NotificationTopic:
+          Type: SNS
+          Properties:
+            Topic: !Ref RequestResponseTopic
+            FilterPolicy:
+              RequestType:
+                - AddRequest # We know this in the handler
+
+  AddFlowFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${Environment}-${Application}-AddFlow
+      CodeUri: test-flow/
+      Handler: AddFlow.lambda
+      Runtime: nodejs12.x
+      Environment:
+        Variables:
+          REQUEST_RESPONSE_TOPIC_ARN: !Ref RequestResponseTopic
+      Events:
+        NotificationTopic:
+          Type: SNS
+          Properties:
+            Topic: !Ref RequestResponseTopic
+            FilterPolicy:
+              # TODO: The following is an AND, we want an OR
+              RequestType:
+                - AddFlowRequest
+              FlowName:
+                - AddFlow
+
+Outputs:
+
+  AddActivityFunction:
+    Description: "ARN"
+    Value: !GetAtt AddActivityFunction.Arn
+
+  AddFlowFunction:
+    Description: "ARN"
+    Value: !GetAtt AddFlowFunction.Arn

@@ -1,0 +1,100 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'sam-multi-function-test
+
+  Sample SAM Template for sam-multi-function-test
+
+  '
+Parameters:
+  Application:
+    Type: String
+    Default: FlowPrototype
+  Environment:
+    Type: String
+Globals:
+  Function:
+    Timeout: 3
+Resources:
+  RequestResponseTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName:
+        Fn::Sub: ${Environment}-${Application}-RequestResponseTopic
+      DisplayName: Topic for request & response messages
+  FlowWireTapFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: ${Environment}-${Application}-FlowWireTap
+      CodeUri: FlowWireTapFunction
+      Handler: FlowWireTap.handler
+      Runtime: nodejs12.x
+      Events:
+        NotificationTopic:
+          Type: SNS
+          Properties:
+            Topic:
+              Ref: RequestResponseTopic
+  AddActivityFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: ${Environment}-${Application}-AddActivity
+      CodeUri: AddActivityFunction
+      Handler: AddActivity.handler
+      Runtime: nodejs12.x
+      Policies:
+      - SNSPublishMessagePolicy:
+          TopicName:
+            Fn::GetAtt:
+            - RequestResponseTopic
+            - TopicName
+      Environment:
+        Variables:
+          REQUEST_RESPONSE_TOPIC_ARN:
+            Ref: RequestResponseTopic
+      Events:
+        NotificationTopic:
+          Type: SNS
+          Properties:
+            Topic:
+              Ref: RequestResponseTopic
+            FilterPolicy:
+              RequestType:
+              - AddRequest
+  AddFlowFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: ${Environment}-${Application}-AddFlow
+      CodeUri: AddFlowFunction
+      Handler: AddFlow.lambda
+      Runtime: nodejs12.x
+      Environment:
+        Variables:
+          REQUEST_RESPONSE_TOPIC_ARN:
+            Ref: RequestResponseTopic
+      Events:
+        NotificationTopic:
+          Type: SNS
+          Properties:
+            Topic:
+              Ref: RequestResponseTopic
+            FilterPolicy:
+              RequestType:
+              - AddFlowRequest
+              FlowName:
+              - AddFlow
+Outputs:
+  AddActivityFunction:
+    Description: ARN
+    Value:
+      Fn::GetAtt:
+      - AddActivityFunction
+      - Arn
+  AddFlowFunction:
+    Description: ARN
+    Value:
+      Fn::GetAtt:
+      - AddFlowFunction
+      - Arn

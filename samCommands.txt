@@ -1,0 +1,3 @@
+sam build
+sam deploy
+aws cloudformation delete-stack --stack-name sam-multi-function-test --region eu-west-2
