@@ -1,7 +1,7 @@
 const flowActivity = require('./FlowActivity.js');
 const addActivity = require('./AddActivity.js');
 
-exports.HANDLED_REQUEST_NAME = 'AddRequest';
+exports.HANDLED_REQUEST_NAME = 'Add';
 
 exports.handler = async function (event) {
 

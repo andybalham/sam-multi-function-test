@@ -27,7 +27,7 @@ describe('Test AddActivity', function () {
                 {
                     Sns: {
                         Message: messageJson,
-                        MessageAttributes: { RequestType: { Value: 'AddRequest' } }
+                        MessageAttributes: { MessageType: { Value: 'Request:Add' } }
                     }
                 }
             ]
@@ -55,7 +55,7 @@ describe('Test AddActivity', function () {
         expect(publishedData.MessageId).to.equal('MockMessageId');
         
         expect(actualPublishedParams.TopicArn).to.equal(env.requestResponseTopicArn);
-        expect(actualPublishedParams.MessageAttributes).deep.equal({FlowName: { DataType: 'String', StringValue: context.flowName }});
+        expect(actualPublishedParams.MessageAttributes).deep.equal({MessageType: { DataType: 'String', Value: `Response:${context.flowName}` }});
 
         expect(actualResponse.context).deep.equal(context);        
         expect(actualResponse.body).deep.equal({total: 3});

@@ -57,15 +57,15 @@ Resources:
           Properties:
             Topic: !Ref RequestResponseTopic
             FilterPolicy:
-              RequestType:
-                - AddRequest # We know this in the handler
+              MessageType:
+                - Request:Add
 
   AddFlowFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub ${Environment}-${Application}-AddFlow
       CodeUri: test-flow/
-      Handler: AddFlow.lambda
+      Handler: AddFlow.handler
       Runtime: nodejs12.x
       Environment:
         Variables:
@@ -76,11 +76,9 @@ Resources:
           Properties:
             Topic: !Ref RequestResponseTopic
             FilterPolicy:
-              # TODO: The following is an AND, we want an OR
-              RequestType:
-                - AddFlowRequest
-              FlowName:
-                - AddFlow
+              MessageType:
+                - Request:AddFlow
+                - Response:AddFlow
 
 Outputs:
 
