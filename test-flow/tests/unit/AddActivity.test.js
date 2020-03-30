@@ -7,7 +7,7 @@ const expect = chai.expect;
 
 describe('Test AddActivity', function () {
 
-    it.only('Handles messages', async () => {
+    it('Handles messages', async () => {
         
         const context = {
             flowName: 'AddFlow',
@@ -50,12 +50,12 @@ describe('Test AddActivity', function () {
             }
         };
 
-        const publishedData = await flowActivity.handleMessage(event, addActivitySUT, env, testDeps, 'AddRequest');
+        const publishedData = await flowActivity.handleMessage(event, addActivitySUT, env, testDeps);
 
         expect(publishedData.MessageId).to.equal('MockMessageId');
         
         expect(actualPublishedParams.TopicArn).to.equal(env.requestResponseTopicArn);
-        expect(actualPublishedParams.MessageAttributes).deep.equal({MessageType: { DataType: 'String', Value: `Response:${context.flowName}` }});
+        expect(actualPublishedParams.MessageAttributes).deep.equal({MessageType: { DataType: 'String', StringValue: `Response:${context.flowName}` }});
 
         expect(actualResponse.context).deep.equal(context);        
         expect(actualResponse.body).deep.equal({total: 3});

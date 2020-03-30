@@ -36,12 +36,12 @@ function getRequestMessage(event, handledRequestType) {
     
     console.log(`Request sns: ${JSON.stringify(sns)}`);
     
-    const requestType = (sns.MessageAttributes.RequestType !== undefined)
-        ? sns.MessageAttributes.RequestType.Value
+    const messageType = (sns.MessageAttributes.MessageType !== undefined)
+        ? sns.MessageAttributes.MessageType.Value
         : undefined;
 
-    if (requestType !== handledRequestType) {
-        throw new Error(`Unexpected request type: ${requestType}`);
+    if (messageType !== `Request:${handledRequestType}`) {
+        throw new Error(`Unexpected request type: ${messageType}`);
     }
 
     const message = JSON.parse(sns.Message);
@@ -58,7 +58,7 @@ async function publishResponseMessage(requestMessage, response, env, deps) {
         }),
         TopicArn: env.requestResponseTopicArn,
         MessageAttributes: {
-            FlowName: { DataType: 'String', StringValue: requestMessage.context.flowName }
+            MessageType: { DataType: 'String', StringValue: `Response:${requestMessage.context.flowName}` }
         }
     };
     

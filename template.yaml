@@ -67,6 +67,9 @@ Resources:
       CodeUri: test-flow/
       Handler: AddFlow.handler
       Runtime: nodejs12.x
+      Policies:
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt RequestResponseTopic.TopicName
       Environment:
         Variables:
           REQUEST_RESPONSE_TOPIC_ARN: !Ref RequestResponseTopic
@@ -77,7 +80,7 @@ Resources:
             Topic: !Ref RequestResponseTopic
             FilterPolicy:
               MessageType:
-                - Request:AddFlow
+                - Request:AddFlow # This matches Request:Add
                 - Response:AddFlow
 
 Outputs:
