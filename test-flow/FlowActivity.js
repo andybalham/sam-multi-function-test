@@ -40,7 +40,7 @@ function getRequestMessage(event, handledRequestType) {
         ? sns.MessageAttributes.MessageType.Value
         : undefined;
 
-    if (messageType !== `Request:${handledRequestType}`) {
+    if (messageType !== `${handledRequestType}:Request`) {
         throw new Error(`Unexpected request type: ${messageType}`);
     }
 
@@ -58,7 +58,7 @@ async function publishResponseMessage(requestMessage, response, env, deps) {
         }),
         TopicArn: env.requestResponseTopicArn,
         MessageAttributes: {
-            MessageType: { DataType: 'String', StringValue: `Response:${requestMessage.context.flowName}` }
+            MessageType: { DataType: 'String', StringValue: `${requestMessage.context.flowName}:Response` }
         }
     };
     

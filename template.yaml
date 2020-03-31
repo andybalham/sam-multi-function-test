@@ -25,6 +25,11 @@ Resources:
       TopicName: !Sub ${Environment}-${Application}-RequestResponseTopic
       DisplayName: Topic for request & response messages
 
+  FlowInstanceTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: !Sub ${Environment}-${Application}-FlowInstanceTable
+
   FlowWireTapFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -58,7 +63,7 @@ Resources:
             Topic: !Ref RequestResponseTopic
             FilterPolicy:
               MessageType:
-                - Request:Add
+                - Add:Request
 
   AddFlowFunction:
     Type: AWS::Serverless::Function
@@ -70,9 +75,12 @@ Resources:
       Policies:
         - SNSPublishMessagePolicy:
             TopicName: !GetAtt RequestResponseTopic.TopicName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FlowInstanceTable
       Environment:
         Variables:
           REQUEST_RESPONSE_TOPIC_ARN: !Ref RequestResponseTopic
+          FLOW_INSTANCE_TABLE_NAME: !Ref FlowInstanceTable
       Events:
         NotificationTopic:
           Type: SNS
@@ -80,10 +88,14 @@ Resources:
             Topic: !Ref RequestResponseTopic
             FilterPolicy:
               MessageType:
-                - Request:AddFlow # This matches Request:Add
-                - Response:AddFlow
+                - AddFlow:Request
+                - AddFlow:Response
 
 Outputs:
+
+  FlowInstanceTable:
+    Description: "ARN"
+    Value: !GetAtt FlowInstanceTable.Arn
 
   AddActivityFunction:
     Description: "ARN"

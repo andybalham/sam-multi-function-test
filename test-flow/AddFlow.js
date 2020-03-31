@@ -1,23 +1,40 @@
 const AWS = require('aws-sdk');
 const SNS = new AWS.SNS();
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
+
 const uuid = require('uuid');
+
 const addFlow = require('./AddFlow.js');
 const flowActivityProxy = require('./FlowActivityProxy.js');
 
-// TODO: Replace with DynamoDb
-const flowInstanceStore = new Map();
-
 exports.handler = async function (event) {
+
+    console.log(`process.env.FLOW_INSTANCE_TABLE_NAME: ${process.env.FLOW_INSTANCE_TABLE_NAME}`);
 
     const deps = {
         publish: async (params) => {
             return await SNS.publish(params).promise();
         },
-        saveState: (state) => {
-            flowInstanceStore.set(state.context.flowInstanceId, state);
+        saveState: async (state) => {
+            const params = {
+                TableName: process.env.FLOW_INSTANCE_TABLE_NAME,
+                Item: {
+                    id: state.context.flowInstanceId,
+                    state: JSON.stringify(state)
+                }
+            };
+            await dynamoDb.put(params).promise();
         },
-        loadState: (flowInstanceId) => {
-            return flowInstanceStore.get(flowInstanceId);
+        loadState: async (flowInstanceId) => {
+            var params = {
+                TableName: process.env.FLOW_INSTANCE_TABLE_NAME,
+                Key: {
+                    id: flowInstanceId
+                }
+            };
+            const flowInstanceItem = await dynamoDb.get(params).promise();
+            console.log(`flowInstanceItem.Item.state: ${flowInstanceItem.Item.state}`);
+            return JSON.parse(flowInstanceItem.Item.state);
         },
         addActivity: flowActivityProxy
     };
@@ -36,11 +53,11 @@ exports.handler = async function (event) {
 
     switch (messageType) {
 
-    case 'Request:AddFlow':
+    case 'AddFlow:Request':
         response = await addFlow.handleRequest(undefined, message.body, deps);
         break;
 
-    case 'Response:AddFlow':
+    case 'AddFlow:Response':
         response = await addFlow.handleResume(message.context, message.body, deps);
         break;
 
@@ -92,7 +109,7 @@ exports.handleRequest = async function (_flowContext, flowRequest, deps) {
 
 exports.handleResume = async function (flowContext, activityResponse, deps) {
 
-    const state = deps.loadState(flowContext.flowInstanceId);
+    const state = await deps.loadState(flowContext.flowInstanceId);
 
     if (state === undefined) {
         throw new Error(`No state could be loaded for instance id: ${flowContext.flowInstanceId}`);
@@ -141,7 +158,7 @@ async function runFlow(startIndex, state, deps) {
 
         } else {
 
-            deps.saveState(state);
+            await deps.saveState(state);
             return;
         }
     }

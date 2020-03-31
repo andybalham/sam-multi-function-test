@@ -13,23 +13,23 @@ describe('Test AddFlow', function () {
     };
 
     [
-        { request: { x: 1, y: 2, z: 3}, expectedResult: 6 },
+        { request: { x: 1, y: 2, z: 3 }, expectedResult: 6 },
     ].forEach(theory => {
-        it(`Handles request synchronously ${JSON.stringify(theory)}`, async () => {       
-            
+        it(`Handles request synchronously ${JSON.stringify(theory)}`, async () => {
+
             testDeps.addActivity = addActivity;
 
             const response = await addFlowSUT.handleRequest(undefined, theory.request, testDeps);
 
             expect(response.total).to.equal(theory.expectedResult);
-        });    
+        });
     });
 
     [
-        { request: { x: 1, y: 2, z: 3}, expectedResult: 6 },
+        { request: { x: 1, y: 2, z: 3 }, expectedResult: 6 },
     ].forEach(theory => {
-        it(`Handles request asynchronously ${JSON.stringify(theory)}`, async () => {       
-            
+        it.only(`Handles request asynchronously ${JSON.stringify(theory)}`, async () => {
+
             const flowInstanceStore = new Map();
             testDeps.saveState = (state) => {
                 flowInstanceStore.set(state.context.flowInstanceId, state);
@@ -44,7 +44,7 @@ describe('Test AddFlow', function () {
             let actualMessage;
             testDeps.publish = async (params) => {
                 actualMessageAttributes = params.MessageAttributes;
-                actualMessage = JSON.parse(params.Message);                
+                actualMessage = JSON.parse(params.Message);
                 return { MessageId: 'MockMessageId' };
             };
 
@@ -52,9 +52,9 @@ describe('Test AddFlow', function () {
             let syncResponse;
 
             asyncResponse = await addFlowSUT.handleRequest(undefined, theory.request, testDeps);
-    
+
             expect(asyncResponse).to.be.undefined;
-            expect(actualMessageAttributes).deep.equal({RequestType: {DataType: 'String', StringValue: 'AddRequest'}});
+            expect(actualMessageAttributes).deep.equal({ MessageType: { DataType: 'String', StringValue: 'Add:Request' } });
             expect(actualMessage).to.not.be.undefined;
 
             // x + total
@@ -70,26 +70,26 @@ describe('Test AddFlow', function () {
             syncResponse = await addActivity.handleRequest(actualMessage.context, actualMessage.body, testDeps);
 
             expect(syncResponse).to.not.be.undefined;
-            
+
             const finalResponse = await addFlowSUT.handleResume(actualMessage.context, syncResponse, testDeps);
 
             expect(finalResponse).to.not.be.undefined;
             expect(finalResponse.total).to.equal(6);
-        });        
+        });
     });
 });
 
 async function handleAsyncAddRequest(syncResponse, actualMessage, testDeps, asyncResponse, actualMessageAttributes) {
 
     syncResponse = await addActivity.handleRequest(actualMessage.context, actualMessage.body, testDeps);
-    
+
     expect(syncResponse).to.not.be.undefined;
-    
+
     asyncResponse = await addFlowSUT.handleResume(actualMessage.context, syncResponse, testDeps);
-    
+
     expect(asyncResponse).to.be.undefined;
-    expect(actualMessageAttributes).deep.equal({ RequestType: { DataType: 'String', StringValue: 'AddRequest' } });
+    expect(actualMessageAttributes).deep.equal({ MessageType: { DataType: 'String', StringValue: 'Add:Request' } });
     expect(actualMessage).to.not.be.undefined;
-    
+
     return { syncResponse, asyncResponse };
 }

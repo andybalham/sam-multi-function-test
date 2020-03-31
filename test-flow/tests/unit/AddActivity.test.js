@@ -27,7 +27,7 @@ describe('Test AddActivity', function () {
                 {
                     Sns: {
                         Message: messageJson,
-                        MessageAttributes: { MessageType: { Value: 'Request:Add' } }
+                        MessageAttributes: { MessageType: { Value: 'Add:Request' } }
                     }
                 }
             ]

@@ -7,7 +7,7 @@ exports.handleRequest = async function(context, request, deps) {
         }),
         TopicArn: process.env.REQUEST_RESPONSE_TOPIC_ARN,
         MessageAttributes: {
-            MessageType: { DataType: 'String', StringValue: `Request:${request.TYPE_NAME}` }
+            MessageType: { DataType: 'String', StringValue: `${request.TYPE_NAME}:Request` }
         }
     };
     
