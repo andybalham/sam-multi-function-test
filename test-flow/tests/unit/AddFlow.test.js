@@ -28,7 +28,7 @@ describe('Test AddFlow', function () {
     [
         { request: { x: 1, y: 2, z: 3 }, expectedResult: 6 },
     ].forEach(theory => {
-        it.only(`Handles request asynchronously ${JSON.stringify(theory)}`, async () => {
+        it(`Handles request asynchronously ${JSON.stringify(theory)}`, async () => {
 
             const flowInstanceStore = new Map();
             testDeps.saveState = (state) => {
@@ -36,6 +36,9 @@ describe('Test AddFlow', function () {
             };
             testDeps.loadState = (flowInstanceId) => {
                 return flowInstanceStore.get(flowInstanceId);
+            };
+            testDeps.deleteState = (flowInstanceId) => {
+                return flowInstanceStore.delete(flowInstanceId);
             };
 
             testDeps.addActivity = flowActivityProxy;

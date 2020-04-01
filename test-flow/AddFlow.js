@@ -20,7 +20,9 @@ exports.handler = async function (event) {
                 TableName: process.env.FLOW_INSTANCE_TABLE_NAME,
                 Item: {
                     id: state.context.flowInstanceId,
-                    state: JSON.stringify(state)
+                    context: state.context,
+                    data: JSON.stringify(state.data),
+                    lastUpdated: new Date().toISOString()
                 }
             };
             await dynamoDb.put(params).promise();
@@ -33,8 +35,20 @@ exports.handler = async function (event) {
                 }
             };
             const flowInstanceItem = await dynamoDb.get(params).promise();
-            console.log(`flowInstanceItem.Item.state: ${flowInstanceItem.Item.state}`);
-            return JSON.parse(flowInstanceItem.Item.state);
+            const state = {
+                context: flowInstanceItem.Item.context,
+                data: JSON.parse(flowInstanceItem.Item.data)
+            };
+            return state;
+        },
+        deleteState: async (flowInstanceId) => {
+            var params = {
+                TableName: process.env.FLOW_INSTANCE_TABLE_NAME,
+                Key: {
+                    id: flowInstanceId
+                }
+            };
+            await dynamoDb.delete(params).promise();
         },
         addActivity: flowActivityProxy
     };
@@ -111,6 +125,8 @@ exports.handleResume = async function (flowContext, activityResponse, deps) {
 
     const state = await deps.loadState(flowContext.flowInstanceId);
 
+    state.isLoaded = true;
+
     if (state === undefined) {
         throw new Error(`No state could be loaded for instance id: ${flowContext.flowInstanceId}`);
     }
@@ -134,7 +150,7 @@ exports.handleResume = async function (flowContext, activityResponse, deps) {
     step.processResponse(activityResponse, state.data);
 
     const flowResponse = await runFlow(stepIndex + 1, state, deps);
-
+    
     return flowResponse;
 };
 
@@ -161,6 +177,10 @@ async function runFlow(startIndex, state, deps) {
             await deps.saveState(state);
             return;
         }
+    }
+
+    if (state.isLoaded) {
+        await deps.deleteState(state.context.flowInstanceId);        
     }
 
     return {
